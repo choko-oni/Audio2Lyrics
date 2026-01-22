@@ -8,10 +8,8 @@ st.title("歌词识别工具")
 
 language = st.selectbox(
     "请选择歌曲语言：",
-    ("中文", "英文", "日语")
+    ("日语")
 )
-
-st.write(f"您选择的语言是: {language}")
 
 st.subheader("文件上传")
 uploaded_file = st.file_uploader("请选择一个文件", type=None)
@@ -19,8 +17,7 @@ uploaded_file = st.file_uploader("请选择一个文件", type=None)
 if uploaded_file is not None:
     st.write("文件名:", uploaded_file.name)
     st.write("文件类型:", uploaded_file.type)
-    st.write("文件大小:", uploaded_file.size, "字节")
-    
+    st.write("文件大小:", round(uploaded_file.size / 1024 / 1024, 2), "MB")
     # 保存上传的文件到临时目录
     with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(uploaded_file.name)[1]) as tmp_file:
         tmp_file.write(uploaded_file.getvalue())
@@ -47,9 +44,8 @@ if uploaded_file is not None:
     if 'lyrics' in st.session_state:
         st.subheader("识别结果")
         
-        # 添加罗马音转换按钮
-        if st.button("转换为罗马音"):
-            st.session_state.show_romaji = True
+        # 自动转换为罗马音
+        st.session_state.show_romaji = True
         
         if st.session_state.get('show_romaji', False):
             # 初始化kakasi
