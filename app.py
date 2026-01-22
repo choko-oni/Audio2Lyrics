@@ -1,7 +1,7 @@
 import streamlit as st
 import os
 import tempfile
-from start import recognize_japanese_lyrics
+from start import recognize_lyrics
 from pykakasi import kakasi
 
 # 翻译字典
@@ -9,7 +9,7 @@ translations = {
     "zh": {
         "title": "歌词识别工具",
         "language_select": "请选择歌曲语言：",
-        "languages": ["中文", "英文", "日语"],
+        "languages": ["中文", "英文", "日语", "俄语"],
         "file_upload": "文件上传",
         "select_file": "请选择一个文件",
         "file_name": "文件名:",
@@ -27,7 +27,7 @@ translations = {
     "en": {
         "title": "Lyrics Recognition Tool",
         "language_select": "Please select song language:",
-        "languages": ["Chinese", "English", "Japanese"],
+        "languages": ["Chinese", "English", "Japanese", "Russian"],
         "file_upload": "File Upload",
         "select_file": "Please select a file",
         "file_name": "File name:",
@@ -45,7 +45,7 @@ translations = {
     "ja": {
         "title": "歌詞認識ツール",
         "language_select": "曲の言語を選択してください:",
-        "languages": ["中国語", "英語", "日本語"],
+        "languages": ["中国語", "英語", "日本語", "ロシア語"],
         "file_upload": "ファイルアップロード",
         "select_file": "ファイルを選択してください",
         "file_name": "ファイル名:",
@@ -88,6 +88,20 @@ song_language = st.selectbox(
     t["languages"]
 )
 
+# 语言代码映射
+language_code_map = {
+    "中文": "zh",
+    "English": "en",
+    "Japanese": "ja",
+    "俄语": "ru",
+    "Russian": "ru",
+    "日语": "ja",
+    "中国語": "zh",
+    "英語": "en",
+    "日本語": "ja",
+    "ロシア語": "ru"
+}
+
 st.subheader(t["file_upload"])
 uploaded_file = st.file_uploader(t["select_file"], type=None)
 
@@ -107,12 +121,16 @@ if uploaded_file is not None:
     # 识别歌词按钮
     if st.button(t["recognize_button"], type="secondary"):
         with st.spinner(t["recognizing"]):
+            # 获取语言代码
+            lang_code = language_code_map.get(song_language, "ja")
+            
             # 调用识别函数
-            lyrics = recognize_japanese_lyrics(temp_file_path)
+            lyrics = recognize_lyrics(temp_file_path, language=lang_code)
             
             if lyrics:
                 # 保存歌词到session_state
                 st.session_state.lyrics = lyrics
+                st.session_state.lang_code = lang_code
                 st.session_state.show_romaji = False
             else:
                 st.error(t["recognition_failed"])
@@ -121,10 +139,13 @@ if uploaded_file is not None:
     if 'lyrics' in st.session_state:
         st.subheader(t["recognition_result"])
         
-        # 自动转换为罗马音
-        st.session_state.show_romaji = True
+        # 检查是否是日语，若是则自动转换为罗马音
+        if st.session_state.get('lang_code') == "ja":
+            st.session_state.show_romaji = True
+        else:
+            st.session_state.show_romaji = False
         
-        if st.session_state.get('show_romaji', False):
+        if st.session_state.get('show_romaji', False) and st.session_state.get('lang_code') == "ja":
             # 初始化kakasi
             kks = kakasi()
             kks.setMode("J", "a")  # 日语转罗马音

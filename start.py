@@ -3,26 +3,50 @@ import os
 import re
 import tempfile
 
-def clean_and_format_lyrics(text):
+def clean_and_format_lyrics(text, language):
     """
-    清理歌词：去掉"歌詞"二字 + 按日语标点逐句换行 + 过滤空行
+    清理歌词：根据语言进行不同的清理和格式化
     """
-    # 1. 彻底去掉所有"歌詞"（包括全角/半角、分隔符组合）
-    cleaned = re.sub(r'歌詞・|歌詞、|歌詞|かし', '', text)
-    # 2. 按日语标点（顿号、逗号、句号）拆分句子并换行
-    sentences = re.split(r'[，、。]', cleaned)
-    # 3. 过滤空行、纯标点行、多余空格
+    # 1. 清理特定语言的关键词
+    if language == "ja":
+        # 去掉"歌詞"二字
+        cleaned = re.sub(r'歌詞・|歌詞、|歌詞|かし', '', text)
+        # 按日语标点（顿号、逗号、句号）拆分句子并换行
+        sentences = re.split(r'[，、。]', cleaned)
+    elif language == "zh":
+        # 去掉"歌词"二字
+        cleaned = re.sub(r'歌词', '', text)
+        # 按中文标点（逗号、句号）拆分句子并换行
+        sentences = re.split(r'[，。]', cleaned)
+    elif language == "en":
+        # 按英文标点（句号、问号、感叹号）拆分句子并换行
+        sentences = re.split(r'[.!?]', text)
+    elif language == "ru":
+        # 按俄语标点（句号、问号、感叹号）拆分句子并换行
+        sentences = re.split(r'[.!?]', text)
+    else:
+        # 默认按通用标点拆分
+        sentences = re.split(r'[，。.!?]', text)
+    
+    # 2. 过滤空行、纯标点行、多余空格
     formatted = []
     for sent in sentences:
         sent = sent.strip()
-        if sent and not re.match(r'^[・、，。\s]+$', sent):
+        if sent and not re.match(r'^[・、，。.!?\s]+$', sent):
             formatted.append(sent)
-    # 4. 逐句换行输出
+    
+    # 3. 逐句换行输出
     return "\n".join(formatted)
 
-def recognize_japanese_lyrics(audio_path):
+def recognize_lyrics(audio_path, language="ja"):
+    """
+    识别歌词的通用函数
+    :param audio_path: 音频文件路径
+    :param language: 语言代码，支持 "zh"（中文）、"en"（英文）、"ja"（日语）
+    :return: 格式化后的歌词文本
+    """
     # ========== 1. 配置参数 ==========
-    output_file = "最终歌词_去歌詞换行版.txt"
+    output_file = f"最终歌词_{language}_换行版.txt"
 
     # ========== 2. 环境/文件检查 ==========
     # 检查FFmpeg
@@ -43,14 +67,14 @@ def recognize_japanese_lyrics(audio_path):
     print(f"🎙️ 正在识别音频：{audio_path}")
     result = model.transcribe(
         audio_path,
-        language="ja",
+        language=language,
         verbose=False,
         fp16=False,
         # 核心参数：避免重复+精准识别
         temperature=0.7,
         beam_size=3,
         best_of=3,
-        initial_prompt="",  # 清空提示词，彻底避免"歌詞"干扰
+        initial_prompt="",  # 清空提示词，避免干扰
         condition_on_previous_text=False,
         no_speech_threshold=0.6,
         logprob_threshold=-1.0,
@@ -59,10 +83,10 @@ def recognize_japanese_lyrics(audio_path):
 
     # ========== 5. 清理+格式化歌词 ==========
     raw_lyrics = result["text"].strip()
-    formatted_lyrics = clean_and_format_lyrics(raw_lyrics)
+    formatted_lyrics = clean_and_format_lyrics(raw_lyrics, language)
 
     # ========== 6. 输出+保存 ==========
-    print("\n✅ 最终识别结果（去歌詞+逐句换行）：")
+    print(f"\n✅ 最终识别结果（{language}）：")
     print("-" * 50)
     print(formatted_lyrics)
     print("-" * 50)
@@ -74,8 +98,12 @@ def recognize_japanese_lyrics(audio_path):
 
     return formatted_lyrics
 
+# 保持向后兼容
+def recognize_japanese_lyrics(audio_path):
+    return recognize_lyrics(audio_path, language="ja")
+
 # ========== 执行识别 ==========
 if __name__ == "__main__":
     # 默认路径，仅在直接运行时使用
     default_path = os.path.abspath("./audio_dir/test.mp3")
-    recognize_japanese_lyrics(default_path)
+    recognize_lyrics(default_path, language="ja")
