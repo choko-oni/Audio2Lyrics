@@ -1,2 +1,14 @@
-__pycache__/start.cpython-39.pyc
-models/small.pt
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info
+.pytest_cache
+.ipynb_checkpoints
+thumbs.db
+.DS_Store
+.idea
+models/
+*.pt
+venv/
+whisper-venv/
+audio_dir/
