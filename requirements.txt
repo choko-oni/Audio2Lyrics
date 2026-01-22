@@ -1,0 +1,9 @@
+streamlit
+whisper
+pykakasi
+numba
+numpy
+torch
+tqdm
+more-itertools
+tiktoken
