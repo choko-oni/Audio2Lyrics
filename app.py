@@ -4,32 +4,109 @@ import tempfile
 from start import recognize_japanese_lyrics
 from pykakasi import kakasi
 
-st.title("歌词识别工具")
+# 翻译字典
+translations = {
+    "zh": {
+        "title": "歌词识别工具",
+        "language_select": "请选择歌曲语言：",
+        "languages": ["中文", "英文", "日语"],
+        "file_upload": "文件上传",
+        "select_file": "请选择一个文件",
+        "file_name": "文件名:",
+        "file_type": "文件类型:",
+        "file_size": "文件大小:",
+        "audio_player": "音频播放",
+        "recognize_button": "识别歌词",
+        "recognizing": "正在识别歌词，请稍候...",
+        "recognition_failed": "歌词识别失败，请检查错误信息",
+        "recognition_result": "识别结果",
+        "romaji_conversion": "歌词罗马音对照",
+        "japanese_original": "日文原文",
+        "romaji": "罗马音"
+    },
+    "en": {
+        "title": "Lyrics Recognition Tool",
+        "language_select": "Please select song language:",
+        "languages": ["Chinese", "English", "Japanese"],
+        "file_upload": "File Upload",
+        "select_file": "Please select a file",
+        "file_name": "File name:",
+        "file_type": "File type:",
+        "file_size": "File size:",
+        "audio_player": "Audio Playback",
+        "recognize_button": "Recognize Lyrics",
+        "recognizing": "Recognizing lyrics, please wait...",
+        "recognition_failed": "Lyrics recognition failed, please check error message",
+        "recognition_result": "Recognition Result",
+        "romaji_conversion": "Lyrics Romaji Comparison",
+        "japanese_original": "Japanese Original",
+        "romaji": "Romaji"
+    },
+    "ja": {
+        "title": "歌詞認識ツール",
+        "language_select": "曲の言語を選択してください:",
+        "languages": ["中国語", "英語", "日本語"],
+        "file_upload": "ファイルアップロード",
+        "select_file": "ファイルを選択してください",
+        "file_name": "ファイル名:",
+        "file_type": "ファイルタイプ:",
+        "file_size": "ファイルサイズ:",
+        "audio_player": "オーディオ再生",
+        "recognize_button": "歌詞を認識",
+        "recognizing": "歌詞を認識中、お待ちください...",
+        "recognition_failed": "歌詞の認識に失敗しました。エラーメッセージを確認してください",
+        "recognition_result": "認識結果",
+        "romaji_conversion": "歌詞ローマ字対照",
+        "japanese_original": "日本語原文",
+        "romaji": "ローマ字"
+    }
+}
 
-language = st.selectbox(
-    "请选择歌曲语言：",
-    ("日语")
+# 页面语言选择
+page_language = st.sidebar.selectbox(
+    "Select Page Language / 选择页面语言 / ページ言語を選択",
+    ("中文", "English", "日本語"),
+    index=0
 )
 
-st.subheader("文件上传")
-uploaded_file = st.file_uploader("请选择一个文件", type=None)
+# 根据选择的语言设置翻译
+if page_language == "中文":
+    lang_key = "zh"
+elif page_language == "English":
+    lang_key = "en"
+else:  # 日本語
+    lang_key = "ja"
+
+t = translations[lang_key]
+
+# 显示标题
+st.title(t["title"])
+
+# 歌曲语言选择
+song_language = st.selectbox(
+    t["language_select"],
+    t["languages"]
+)
+
+st.subheader(t["file_upload"])
+uploaded_file = st.file_uploader(t["select_file"], type=None)
 
 if uploaded_file is not None:
-    st.write("文件名:", uploaded_file.name)
-    st.write("文件类型:", uploaded_file.type)
-    st.write("文件大小:", round(uploaded_file.size / 1024 / 1024, 2), "MB")
+    st.write(t["file_name"], uploaded_file.name)
+    st.write(t["file_type"], uploaded_file.type)
+    st.write(t["file_size"], round(uploaded_file.size / 1024 / 1024, 2), "MB")
     # 保存上传的文件到临时目录
     with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(uploaded_file.name)[1]) as tmp_file:
         tmp_file.write(uploaded_file.getvalue())
         temp_file_path = tmp_file.name
     
     # 音频播放控件
-    st.subheader("音频播放")
+    st.subheader(t["audio_player"])
     st.audio(uploaded_file, format=uploaded_file.type)
     
     # 识别歌词按钮
-    if st.button("识别歌词", type="secondary"):
-        with st.spinner("正在识别歌词，请稍候..."):
+    if st.button(t["recognize_button"], type="secondary"):
+        with st.spinner(t["recognizing"]):
             # 调用识别函数
             lyrics = recognize_japanese_lyrics(temp_file_path)
             
@@ -38,11 +115,11 @@ if uploaded_file is not None:
                 st.session_state.lyrics = lyrics
                 st.session_state.show_romaji = False
             else:
-                st.error("歌词识别失败，请检查错误信息")
+                st.error(t["recognition_failed"])
     
     # 显示识别结果
     if 'lyrics' in st.session_state:
-        st.subheader("识别结果")
+        st.subheader(t["recognition_result"])
         
         # 自动转换为罗马音
         st.session_state.show_romaji = True
@@ -63,10 +140,10 @@ if uploaded_file is not None:
             for line in lyrics_lines:
                 if line.strip():  # 跳过空行
                     romaji = conv.do(line)
-                    table_data.append({"日文原文": line, "罗马音": romaji})
+                    table_data.append({t["japanese_original"]: line, t["romaji"]: romaji})
             
             # 显示表格
-            st.subheader("歌词罗马音对照")
+            st.subheader(t["romaji_conversion"])
             st.table(table_data)
         else:
             st.text(st.session_state.lyrics)
