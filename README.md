@@ -1,9 +1,6 @@
 # 歌词识别工具 (Lyrics Recognition Tool)
 
 <div align="center">
-    <img src="images/example-zh.png" alt="歌词识别工具" width="600">
-    <br>
-    <br>
     <a href="https://github.com/choko-oni/Audio2Lyrics" target="_blank">
         <img src="https://img.shields.io/github/stars/choko-oni/Audio2Lyrics.svg?style=social&label=Star&maxAge=2592000" alt="GitHub stars">
     </a>
